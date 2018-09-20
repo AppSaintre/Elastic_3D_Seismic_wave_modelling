@@ -1,0 +1,18 @@
+
+-----------------------------------------------------------------------------------------------
+GRVY Example Timing - Performance Timings:              |      Mean      Variance       Count
+--> velocityupdate      : 1.15282e+02 secs ( 40.2063 %) | [2.88133e-02  4.80174e-05       4001]
+--> stressupdate        : 1.01561e+02 secs ( 35.4210 %) | [2.53840e-02  4.86655e-05       4001]
+--> boundarycns         : 4.86667e+01 secs ( 16.9732 %) | [1.21636e-02  4.40085e-05       4001]
+--> write_to_file       : 2.09174e+01 secs (  7.2952 %) | [2.09174e+01  0.00000e+00          1]
+--> storewave           : 2.17522e-01 secs (  0.0759 %) | [5.43670e-05  9.06918e-08       4001]
+--> Main Program        : 2.32978e-02 secs (  0.0081 %) | [2.32978e-02  0.00000e+00          1]
+--> forcing             : 4.13728e-03 secs (  0.0014 %) | [1.03406e-06  2.45192e-13       4001]
+--> allocations         : 0.00000e+00 secs (  0.0000 %) | [    N/A     0.00000e+00          0]
+--> GRVY_Unassigned     : 5.37720e-02 secs (  0.0188 %)
+
+    Total Measured Time = 2.86726e+02 secs (100.0000 %)
+-----------------------------------------------------------------------------------------------
+
+[Warning]: Timer accuracy may be insufficient (forcing) -> minimum measured =  0.000000e+00 secs
+

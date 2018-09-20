@@ -1,0 +1,221 @@
+        -:    0:Source:damping3d.h
+        -:    0:Graph:forward.gcno
+        -:    0:Data:forward.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include<stdio.h>
+        -:    2:#include<stdlib.h>
+        -:    3:#include<math.h>
+        -:    4:
+        -:    5:
+ 19293750:    6:double damping(double Xu,double Yu,double Zu)  // absorbing boundaries 
+        -:    7:{
+        -:    8:double du;
+        -:    9:du=1; //0;
+        -:   10:du=1;//0;
+        -:   11:du=1;//0;
+ 19293750:   12:if(Xu < (x0+Pml))
+  1732500:   13:du = exp(-(0.015*0.015*((x0+Pml-Xu)/2)*((x0+Pml-Xu)/2)));   
+ 19293750:   14:if(Xu > (x-Pml))
+  1777500:   15:du =  exp(-(0.015*0.015*((Xu-(x-Pml))/2)*((Xu-(x-Pml))/2)));
+ 19293750:   16:if(Yu < (yy0+Pml))
+  8489250:   17:du =  exp(-(0.015*0.015*((yy0+Pml-Yu)/2)*((yy0+Pml-Yu)/2)));//d0*((y0+Pml-Yu)/Pml)*((y0+Pml-Yu)/Pml);
+ 19293750:   18:if(Yu > (y-Pml))
+  8709750:   19:du = exp(-(0.015*0.015*((Yu-(y-Pml))/2)*((Yu-(y-Pml))/2)));//d0*((Yu-(y-Pml))/Pml)*((Yu-(y-Pml))/Pml);
+ 19293750:   20:if(Zu > (z-Pml))
+  1935500:   21:du = exp(-(0.015*0.015*((Zu-(z-Pml))/2)*((Zu-(z-Pml))/2))); 
+ 19293750:   22:return du;
+        -:   23:}
+        -:   24:
+        -:   25:
+     4001:   26:void stressupdate()   // function that updates stresses
+        -:   27:{
+     4001:   28:if(deb == 1)
+    #####:   29:   printf("Updating stresses \n");
+     4001:   30: grvy_timer_begin(__func__);
+        -:   31:int i,j,k;
+        -:   32:double value_x,value_y,value_z,lol1;
+   257185:   33:#pragma omp parallel for private(value_x,value_y,value_z,lol1,j,k)
+   126592:   34:for(i=2;i<Nx-2;i++)
+        -:   35:{
+  3356082:   36:for(j=2;j<Ny-2;j++)
+        -:   37:{
+729198072:   38:for(k=2;k<Nz-2;k++)
+        -:   39:{
+        -:   40:
+725913396:   41:value_x = (a*(U3[mat((i+2),j,k)]-U3[mat((i-1),j,k)]))+(b*(U3[mat((i+1),j,k)]-U3[mat(i,j,k)]));
+725913396:   42:value_y = (a*(V3[mat(i,(j+2),k)]-V3[mat(i,(j-1),k)]))+(b*(V3[mat(i,(j+1),k)]-V3[mat(i,j,k)]));
+725913396:   43:value_z = (a*(W3[mat(i,j,(k+2))]-W3[mat(i,j,(k-1))]))+(b*(W3[mat(i,j,(k+1))]-W3[mat(i,j,k)]));
+        -:   44:
+725913396:   45:lol1 = dx[array];
+        -:   46:
+725913396:   47:Txx[array] = (Txx[array]+(((delt*(lamdaxyz[array]+(2*muxyz[array]))*(value_x)/(h))))+(((delt*(lamdaxyz[array])*(value_y)/(h))))+(((delt*(lamdaxyz[array])*(value_z)/(h)))))*lol1;
+        -:   48:
+725913396:   49:Tyy[array] = (Tyy[array]+(((delt*(lamdaxyz[array])*(value_x)/(h))))+(((delt*(lamdaxyz[array]+(2*muxyz[array]))*(value_y)/(h))))+(((delt*(lamdaxyz[array])*(value_z)/(h)))))*lol1;
+725913396:   50:Tzz[array] = (Tzz[array]+(((delt*(lamdaxyz[array])*(value_x)/(h))))+(((delt*(lamdaxyz[array])*(value_y)/(h))))+(((delt*(lamdaxyz[array]+(2*muxyz[array]))*(value_z)/(h)))))*lol1;
+        -:   51:
+725913396:   52:value_x = (a*(U3[mat(i,(j+1),k)]-U3[mat(i,(j-2),k)]))+(b*(U3[mat(i,j,k)]-U3[mat(i,(j-1),k)]));
+725913396:   53:value_y = (a*(V3[mat((i+1),j,k)]-V3[mat((i-2),j,k)]))+(b*(V3[mat(i,j,k)]-V3[mat((i-1),j,k)]));
+725913396:   54:lol1 = dxyx[array];
+725913396:   55:Txy[array] = (Txy[array]+ (((delt*(muxy[array])*(value_y)/(h))))+(((delt*(muxy[array])*(value_x)/(h)))))*lol1;
+        -:   56:
+725913396:   57:value_x = (a*(U3[mat(i,j,(k+1))]-U3[mat(i,j,(k-2))]))+(b*(U3[mat(i,j,k)]-U3[mat(i,j,(k-1))]));
+725913396:   58:value_z = (a*(W3[mat((i+1),j,k)]-W3[mat((i-2),j,k)]))+(b*(W3[mat(i,j,k)]-W3[mat((i-1),j,k)]));
+725913396:   59:lol1 = dzxx[array];
+        -:   60:
+725913396:   61:Tzx[array] = (Tzx[array]+ (((delt*(muzx[array])*(value_z)/(h)))) +(((delt*(muzx[array])*(value_x)/(h)))))*lol1 ;
+725913396:   62:if(Zzx[array]==0)
+        -:   63:{
+  3284676:   64:Tzx[array] = 0;
+        -:   65:}
+725913396:   66:value_y = (a*(V3[mat(i,j,(k+1))]-V3[mat(i,j,(k-2))]))+(b*(V3[mat(i,j,k)]-V3[mat(i,j,(k-1))]));
+725913396:   67:value_z = (a*(W3[mat(i,(j+1),k)]-W3[mat(i,(j-2),k)]))+(b*(W3[mat(i,j,k)]-W3[mat(i,(j-1),k)]));
+725913396:   68:lol1 = dyzx[array];
+725913396:   69:Tyz[array] = (Tyz[array]+ (((delt*(muyz[array])*(value_z)/(h)))) + (((delt*(muyz[array])*(value_y)/(h)))))*lol1 ;
+725913396:   70:if(Zyz[array]==0)
+        -:   71:{
+  3284676:   72:Tyz[array] = 0;
+        -:   73:}
+        -:   74:
+        -:   75:
+        -:   76:}
+  3284676:   77:Tzz[mat(i,j,1)] = -Tzz[mat(i,j,2)];
+  3284676:   78:Tzz[mat(i,j,0)] = -Tzz[mat(i,j,3)];
+  3284676:   79:Tzx[mat(i,j,1)]=-Tzx[mat(i,j,3)];
+        -:   80:
+  3284676:   81:Tyz[mat(i,j,1)]=-Tyz[mat(i,j,3)];
+        -:   82:
+        -:   83:}
+        -:   84:}
+        -:   85:
+     4001:   86:  grvy_timer_end(__func__);
+     4001:   87:}
+        -:   88:
+        -:   89:
+     4001:   90:void velocityupdate()// function that updates velocities
+        -:   91:{
+     4001:   92:if(deb == 1)
+    #####:   93:   printf("Updating velocities \n");
+     4001:   94: grvy_timer_begin(__func__);
+        -:   95:int i,j,k;
+        -:   96:double value_x,value_y,value_z,lol1;
+   256651:   97:#pragma omp parallel for private(value_x,value_y,value_z,lol1,j,k)
+   126325:   98:for(i=2;i<Nx-2;i++)
+        -:   99:{
+  3179221:  100:for(j=2;j<Ny-2;j++)
+        -:  101:{
+690688988:  102:for(k=2;k<Nz-2;k++)
+        -:  103:{
+        -:  104:
+687577410:  105:value_x = (a*(Txx[mat((i+1),j,k)]-Txx[mat((i-2),j,k)]))+(b*(Txx[mat(i,j,k)]-Txx[mat((i-1),j,k)]));
+687577410:  106:value_y = (a*(Txy[mat(i,(j+2),k)]-Txy[mat(i,(j-1),k)]))+(b*(Txy[mat(i,(j+1),k)]-Txy[mat(i,j,k)]));
+687577410:  107:value_z = (a*(Tzx[mat(i,j,(k+2))]-Tzx[mat(i,j,(k-1))]))+(b*(Tzx[mat(i,j,(k+1))]-Tzx[mat(i,j,k)]));
+687577410:  108:lol1 = dux[array];
+        -:  109:
+687577410:  110:U3[array] = U3[array]+(delt*(value_x+value_y+value_z)/(Du[array]*h))+(delt*Fu[array]/Du[array]);
+687577410:  111:U3[array] = U3[array]*lol1;
+        -:  112:
+1372847138:  113:if(Xu[array]==x0 || Xu[array]==x || Yu[array]==yy0 || Yu[array]==y || Zu[array]==z )
+        -:  114:{
+  4981340:  115:U3[array] = 0;
+        -:  116:}
+        -:  117:
+687577410:  118:value_x = (a*(Txy[mat((i+2),j,k)]-Txy[mat((i-1),j,k)]))+(b*(Txy[mat((i+1),j,k)]-Txy[mat(i,j,k)]));
+687577410:  119:value_y = (a*(Tyy[mat(i,(j+1),k)]-Tyy[mat(i,(j-2),k)]))+(b*(Tyy[mat(i,j,k)]-Tyy[mat(i,(j-1),k)]));
+687577410:  120:value_z = (a*(Tyz[mat(i,j,(k+2))]-Tyz[mat(i,j,(k-1))]))+(b*(Tyz[mat(i,j,(k+1))]-Tyz[mat(i,j,k)]));
+687577410:  121:lol1 = dvx[array];
+        -:  122:
+687577410:  123:V3[array] = V3[array]+(delt*(value_x+value_y+value_z)/(Dv[array]*h))+(delt*Fv[array]/Dv[array]);
+687577410:  124:V3[array] = V3[array]*lol1;
+        -:  125:
+1375225982:  126:if(Xv[array]==x0 || Xv[array]==x || Yv[array]==yy0 || Yv[array]==y || Zv[array]==z)
+        -:  127:{
+ 29901300:  128:V3[array] = 0;
+        -:  129:}
+        -:  130:
+687577410:  131:value_x = (a*(Tzx[mat((i+2),j,k)]-Tzx[mat((i-1),j,k)]))+(b*(Tzx[mat((i+1),j,k)]-Tzx[mat(i,j,k)]));
+687577410:  132:value_y = (a*(Tyz[mat(i,(j+2),k)]-Tyz[mat(i,(j-1),k)]))+(b*(Tyz[mat(i,(j+1),k)]-Tyz[mat(i,j,k)]));
+687577410:  133:value_z = (a*(Tzz[mat(i,j,(k+1))]-Tzz[mat(i,j,(k-2))]))+(b*(Tzz[mat(i,j,k)]-Tzz[mat(i,j,(k-1))]));
+687577410:  134:lol1 = dwx[array];
+687577410:  135:W3[array] = W3[array]+(delt*(value_x+value_y+value_z)/(Dw[array]*h))+(delt*Fw[array]/Dw[array]);
+687577410:  136:W3[array] = W3[array]*lol1;
+        -:  137:
+        -:  138:
+1375154820:  139:if(Xw[array]==x0 || Xw[array]==x || Yw[array]==yy0 || Yw[array]==y || Zw[array]==z )
+        -:  140:{
+  3111210:  141:W3[array] = 0;
+        -:  142:}
+        -:  143:
+        -:  144:}
+        -:  145:
+        -:  146:}}
+        -:  147:
+     4001:  148:  grvy_timer_end(__func__);
+     4001:  149:}
+        -:  150:
+     4001:  151:void boundarycns() // function to apply free surface conditions
+        -:  152:{
+     4001:  153:if(deb == 1)
+    #####:  154:   printf("Applying free surface conditions \n");
+     4001:  155: grvy_timer_begin(__func__);
+        -:  156:int i,j,k;
+        -:  157:double temp;
+   258855:  158:#pragma omp parallel for private(j,k)
+   127427:  159:for(i=2;i<Nx-2;i++)
+        -:  160:{
+  1492767:  161:for(j=2;j<Ny-2;j++)
+        -:  162:{
+647225658:  163:for(k=2;k<Nz-2;k++)
+        -:  164:{
+322882326:  165:U3[mat(i,j,1)] = U3[mat(i,j,2)] + W3[mat(i,j,2)] - W3[mat((i-1),j,2)];
+642226884:  166:if(Xu[array]==x0 || Xu[array]==x || Yu[array]==yy0 || Yu[array]==y || Zu[array]==z)
+        -:  167:{
+  3842748:  168:U3[array] = 0;
+        -:  169:}
+        -:  170:
+322882326:  171:V3[mat(i,j,1)] = V3[mat(i,j,2)] + W3[mat(i,j,2)] - W3[mat(i,(j-1),2)];
+645764652:  172:if(Xv[array]==x0 || Xv[array]==x || Yv[array]==yy0 || Yv[array]==y || Zv[array]==z)
+        -:  173:{
+ 14038362:  174:V3[array] = 0;
+        -:  175:}
+        -:  176:
+322882326:  177:temp = lamdaxyz[array]/(lamdaxyz[array]+(2.0*muxyz[array]));
+322882326:  178:W3[mat(i,j,1)] = W3[mat(i,j,3)] + (temp*(U3[mat((i+1),j,1)]-U3[mat(i,j,1)]+V3[mat(i,(j+1),1)]-V3[mat(i,j,1)]+U3[mat((i+1),j,2)]-U3[mat(i,j,2)]+V3[mat(i,(j+1),2)]-V3[mat(i,j,2)]));
+645764652:  179:if(Xw[array]==x0 || Xw[array]==x || Yw[array]==yy0 || Yw[array]==y || Zw[array]==z)
+        -:  180:{
+  1461006:  181:W3[array] = 0;
+        -:  182:}
+645764652:  183:if(U3[array] > 1e-8 || V3[array] > 1e-8 || W3[array] > 1e-8)
+        -:  184:{
+    #####:  185:printf("outof u limits");
+    #####:  186:exit(-1);
+        -:  187:}
+        -:  188:}}}
+        -:  189:
+     4001:  190:  grvy_timer_end(__func__);
+     4001:  191:}
+        -:  192:
+     4001:  193:void forcing(double t)  // point source function 
+        -:  194:{
+     4001:  195:if(deb == 1)
+    #####:  196:   printf("Injecting the source at source location \n");
+     4001:  197: grvy_timer_begin(__func__);
+        -:  198:double ts,tp, gamma,temp;
+     4001:  199:tp = 1/fc;
+     4001:  200:ts = 1.4*tp;
+     4001:  201:if(t<=2*ts)
+        -:  202:{
+      934:  203:gamma = (3.14159*fc*(t-ts));
+      934:  204:temp = ((gamma*gamma)-0.5)*exp(-gamma*gamma);
+      934:  205:Fw[mat(src[0],src[1],src[2])] = temp;
+        -:  206:
+        -:  207:}
+        -:  208:else
+        -:  209:{
+     3067:  210:Fw[mat(src[0],src[1],src[2])] = 0; 
+        -:  211: }
+        -:  212:
+     4001:  213:  grvy_timer_end(__func__);
+     4001:  214:}
+        -:  215:
+        -:  216:

@@ -1,0 +1,314 @@
+        -:    0:Source:routines.h
+        -:    0:Graph:forward.gcno
+        -:    0:Data:forward.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include<stdio.h>
+        -:    2:#include<stdlib.h>
+        -:    3:#include<math.h>
+        -:    4:#include"omp.h"
+        -:    5:#include <string.h>
+        -:    6:
+        -:    7:#define array (Ny*Nz*i)+(Nz*j)+k
+        -:    8:#define mat(i,j,k) (Ny*Nz*i)+(Nz*j)+k
+        -:    9:
+        1:   10:void allocations()  // dynamic allocations of variables made as needed and defined
+        -:   11:{
+        1:   12: grvy_timer_begin(__func__);
+        -:   13:int i,j,k,temp,igot,ii;
+        -:   14:double lol1,lol2,lol3;
+        1:   15:l1 = malloc(1*sizeof(double));
+        -:   16:  /* Initialize/read the file */
+        -:   17:
+        1:   18:  igot = grvy_input_fopen("./input2.txt");
+        -:   19:
+        -:   20:  /* Read specific variables and echo locally */
+        -:   21:
+        1:   22:grvy_input_fread_double("x0",&x0);
+        1:   23:grvy_input_fread_double("x",&x);
+        1:   24:grvy_input_fread_double("yy0",&yy0);
+        1:   25:grvy_input_fread_double("y",&y);
+        1:   26:grvy_input_fread_double("z0",&z0);
+        1:   27:grvy_input_fread_double("z",&z);
+        1:   28:grvy_input_fread_double("h",&h);
+        1:   29:grvy_input_fread_double("totaltime",&totaltime);
+        1:   30:grvy_input_fread_double("delt",&delt);
+        1:   31:grvy_input_fread_double("PML",&Pml);
+        1:   32:grvy_input_fread_double("fc",&fc);
+        1:   33:grvy_input_fread_int("nol",&nol);
+        1:   34:rho = (double *)malloc(nol*sizeof(double));
+        1:   35:Vp = (double *)malloc(nol*sizeof(double));
+        1:   36:Vs = (double *)malloc(nol*sizeof(double));
+        1:   37:mu = (double *)malloc(nol*sizeof(double));
+        1:   38:lamda = (double *)malloc(nol*sizeof(double));
+        1:   39:kappa = (double *)malloc(nol*sizeof(double));
+        1:   40:rec = (int *)malloc(6*sizeof(int));
+        1:   41:src = (int *)malloc(3*sizeof(int));
+        1:   42:grvy_input_fread_double_vec("Du",rho,nol);
+        1:   43:grvy_input_fread_double_vec("Vs",Vs,nol);
+        1:   44:grvy_input_fread_double_vec("Vp",Vp,nol);
+        1:   45:grvy_input_fread_int("order",&order);
+        1:   46:if(order == 2) a = 0;
+        1:   47:grvy_input_fread_int("modev",&modev);
+        1:   48:grvy_input_fread_int_vec("rec",rec,6);
+        1:   49:grvy_input_fread_int_vec("src",src,3);
+        1:   50:grvy_input_fread_int("debug",&deb);
+        -:   51:
+        1:   52:if(deb == 1)
+    #####:   53:   printf("reading data from input file and dynamically allocating memory for the global variables \n");
+        -:   54:
+        -:   55://printf("%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d \n",x0,x,yy0,y,z0,z,h,totaltime,delt,Pml,fc,nol);
+        -:   56://printf("%lf %lf %lf %lf %lf %lf %d %d %d %d %d \n",rho[0],rho[1],Vp[0],Vp[1],Vs[0],Vs[1],order,modev,src[0],src[1],src[2]);
+        -:   57://printf("%d %d %d %d %d %d \n",rec[0],rec[1],rec[2],rec[3],rec[4],rec[5]);
+        -:   58:/*printf("\n ------ Full Dump ------\n\n");
+        -:   59:  grvy_input_fdump();
+        -:   60:  printf(" ---- End Full Dump ----\n\n");
+        -:   61:
+        -:   62:  printf("\n ------ Full Dump (delimited) ------\n\n");
+        -:   63:  grvy_input_fdump_delim("# ");
+        -:   64:  printf(" ---- End Full Dump ----\n\n");
+        -:   65:
+        -:   66:  // Dump the whole file to a file 
+        -:   67:
+        -:   68:  printf("\n ------ Full Dump to test.out ------\n\n");
+        -:   69:  grvy_input_fdump_file("% ","test.out");
+        -:   70:  printf(" -------    End Full Dump    -------\n\n");*/
+        -:   71:
+        1:   72:  grvy_input_fclose();
+        -:   73:
+        1:   74:x0 = x0 - Pml;
+        1:   75:x  = x + Pml;
+        1:   76:yy0 = yy0 - Pml;
+        1:   77:y = y + Pml;
+        1:   78:z = z + Pml;
+        1:   79:hx = h;
+        1:   80:hy=h;
+        1:   81:hz=h;
+        1:   82:Nx = ((x-x0)/hx)+1;
+        1:   83:Ny = ((y-yy0)/hy)+1;
+        1:   84:Nz = ((z-z0)/hz)+1;
+        1:   85:Nx = Nx+4;
+        1:   86:Ny = Ny+4;
+        1:   87:Nz = Nz+4;
+        -:   88://printf("%d %d %d \n",Nx,Ny,Nz);
+        3:   89:for(i=0;i<nol;i++)
+        -:   90:{
+        2:   91:mu[i]=rho[i]*Vs[i]*Vs[i];
+        2:   92:lamda[i]= rho[i]*((Vp[i]*Vp[i])-(2*Vs[i]*Vs[i]));
+        2:   93:kappa[i]=(lamda[i])+(2*mu[i]/3);
+        -:   94:}
+        1:   95:forward = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:   96: Xu = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:   97: Yu = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:   98: Zu = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:   99: U3 = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  100: Du = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  101: Xv = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  102: Yv = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  103: Zv = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  104: V3 = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  105: Dv = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  106: Xw = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  107: Yw = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  108: Zw = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  109: W3 = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  110: Dw = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  111: Xxy = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  112: Yxy = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  113: Zxy = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  114: Txy = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  115: muxy = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  116: Xyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  117: Yyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  118: Zyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  119: Tyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  120: muyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  121: Xzx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  122: Yzx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  123: Zzx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  124: Tzx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  125: muzx =(double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  126: Xxyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  127: Yxyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  128: Zxyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  129: Txx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  130: Tyy = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  131: Tzz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  132: muxyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  133: lamdaxyz = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  134: Fu = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  135: Fv = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  136: Fw = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  137: dx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  138: dxyx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  139: dzxx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  140: dyzx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  141: dux = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  142: dvx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  143: dwx = (double *)malloc(Nx*Ny*Nz*sizeof(double));
+        1:  144:if(!dwx)
+        -:  145:{
+    #####:  146:printf("Failed"); 
+    #####:  147:exit(1);
+        -:  148:}
+        1:  149:d0 = (-log10(R)*1.5*Vp[1]/(Pml));
+      246:  150:for(i=0;i<Nx;i++)
+        -:  151:{
+    12250:  152:for(j=0;j<Ny;j++)
+        -:  153:{
+  2756250:  154:for(k=0;k<Nz;k++)
+        -:  155:{
+  2756250:  156:Xu[array]=x0+((i-2)*hx);
+  2756250:  157:Yu[array]=yy0+(0.5*hy)+((j-2)*hy);
+  2756250:  158:Zu[array]=z0+(0.5*hz)+((k-2)*hz);
+  2756250:  159:U3[array]=0.0;
+  2756250:  160:Fu[array]=0.0;
+        -:  161:lol1 = Xu[array]; lol2 = Yu[array] ; lol3 = Zu[array];
+  2756250:  162:dux[array] = damping(Xu[array],Yu[array],Zu[array]);
+  2756250:  163:temp = Zu[array];
+  8268750:  164:for(ii=0;ii<nol-1;ii++)
+        -:  165:{
+  2756250:  166:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  167:Du[array] = rho[ii];
+  2756250:  168:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+  1384250:  169:Du[array] = rho[ii+1];
+  2756250:  170:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+    #####:  171:Du[array]= (rho[ii]+rho[ii+1])*0.5;
+        -:  172:}
+        -:  173:
+  2756250:  174:Xv[array]=x0+(0.5*hx)+((i-2)*hx);
+  2756250:  175:Yv[array]=yy0+((j-2)*hy);
+  2756250:  176:Zv[array]=z0+(0.5*hz)+((k-2)*hz);
+  2756250:  177:V3[array]=0;
+  2756250:  178:Fv[array]=0;
+  2756250:  179:l1[0]=damping(Xv[array],Yv[array],Zv[array]);
+  2756250:  180:dvx[array] = l1[0];
+  2756250:  181:temp = Zv[array];
+  8268750:  182:for(ii=0;ii<nol-1;ii++)
+        -:  183:{
+  2756250:  184:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  185:Dv[array] = rho[ii];
+  2756250:  186:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+  1384250:  187:Dv[array] = rho[ii+1];
+  2756250:  188:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+    #####:  189:Dv[array]= (rho[ii]+rho[ii+1])*0.5;
+        -:  190:}
+  2756250:  191:Xw[array]=x0+(0.5*hx)+((i-2)*hx);
+  2756250:  192:Yw[array]=yy0+(0.5*hy)+((j-2)*hy);
+  2756250:  193:Zw[array]=z0+((k-2)*hz);
+  2756250:  194:W3[array]=0;
+  2756250:  195:Fw[array]=0;
+  2756250:  196:l1[0]=damping(Xw[array],Yw[array],Zw[array]);
+  2756250:  197:dwx[array] = l1[0];
+  2756250:  198:temp = Zw[array];
+  8268750:  199:for(ii=0;ii<nol-1;ii++)
+        -:  200:{
+  2756250:  201:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  202:Dw[array] = rho[ii];
+  2756250:  203:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  204:Dw[array] = rho[ii+1];
+  2756250:  205:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+    12250:  206:Dw[array]= (rho[ii]+rho[ii+1])*0.5;
+        -:  207:}
+        -:  208:
+  2756250:  209:Xxy[array]=x0+((i-2)*hx);
+  2756250:  210:Yxy[array]=yy0+((j-2)*hy);
+  2756250:  211:Zxy[array]=z0+(0.5*hz)+((k-2)*hz);
+  2756250:  212:Txy[array] = 0;
+        -:  213:
+  2756250:  214:l1[0]=damping(Xxy[array],Yxy[array],Zxy[array]);
+  2756250:  215:dxyx[array] = l1[0];
+  2756250:  216:temp = Zxy[array];
+  8268750:  217:for(ii=0;ii<nol-1;ii++)
+        -:  218:{
+  2756250:  219:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  220:muxy[array] = mu[ii];
+  2756250:  221:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+  1384250:  222:muxy[array] = mu[ii+1];
+  2756250:  223:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+    #####:  224:muxy[array]= (2.0/((1/mu[ii])+(1/mu[ii+1])));
+        -:  225:}
+  2756250:  226:Xyz[array]=x0+(0.5*hx)+((i-2)*hx);
+  2756250:  227:Yyz[array]=yy0+((j-2)*hy);
+  2756250:  228:Zyz[array]=z0+((k-2)*hz);
+  2756250:  229:Tyz[array] = 0;
+  2756250:  230:l1[0]= damping(Xyz[array],Yyz[array],Zyz[array]);
+  2756250:  231:dyzx[array] = l1[0];
+  2756250:  232:temp = Zyz[array];
+  8268750:  233:for(ii=0;ii<nol-1;ii++)
+        -:  234:{
+  2756250:  235:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  236:muyz[array] = mu[ii];
+  2756250:  237:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  238:muyz[array] = mu[ii+1];
+  2756250:  239:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+    12250:  240:muyz[array]= (2.0/((1/mu[ii])+(1/mu[ii+1])));
+        -:  241:}
+  2756250:  242:Xzx[array]=x0+((i-2)*hx);
+  2756250:  243:Yzx[array]=yy0+(0.5*hy)+((j-2)*hy);
+  2756250:  244:Zzx[array]=z0+((k-2)*hz);
+  2756250:  245:Tzx[array]=0;
+  2756250:  246:l1[0]=damping(Xzx[array],Yzx[array],Zzx[array]);
+  2756250:  247:dzxx[array]= l1[0];
+  2756250:  248:temp = Zzx[array];
+  8268750:  249:for(ii=0;ii<nol-1;ii++)
+        -:  250:{
+  2756250:  251:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  252:muzx[array] = mu[ii];
+  2756250:  253:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+  1372000:  254:muzx[array] = mu[ii+1];
+  2756250:  255:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+    12250:  256:muzx[array]= (2.0/((1/mu[ii])+(1/mu[ii+1])));
+        -:  257:}
+  2756250:  258:Xxyz[array]=x0+(0.5*hx)+((i-2)*hx);
+  2756250:  259:Yxyz[array]=yy0+(0.5*hy)+((j-2)*hy);
+  2756250:  260:Zxyz[array]=z0+(0.5*hz)+((k-2)*hz);
+  2756250:  261:Txx[array]=0;
+  2756250:  262:Tyy[array]=0;
+  2756250:  263:Tzz[array]=0;
+        -:  264:
+  2756250:  265:l1[0]= damping(Xxyz[array],Yxyz[array],Zxyz[array]);
+  2756250:  266:dx[array] = l1[0];
+  2756250:  267:temp = Zxyz[array];
+  8268750:  268:for(ii=0;ii<nol-1;ii++)
+        -:  269:{
+  2756250:  270:if(temp<(z0+((ii+1)*((z-z0)/nol))))
+        -:  271:{
+  1372000:  272:muxyz[array] = mu[ii];lamdaxyz[array] = lamda[ii];}
+  2756250:  273:if(temp>(z0+((ii+1)*((z-z0)/nol))))
+        -:  274:{
+  1384250:  275:muxyz[array] = mu[ii+1];lamdaxyz[array] = lamda[ii+1];}
+  2756250:  276:if(temp ==(z0+((ii+1)*((z-z0)/nol))))
+        -:  277:{
+    #####:  278:muxyz[array]= (2.0/((1/mu[ii])+(1/mu[ii+1])));lamdaxyz[array] = (2.0/((1/lamda[ii])+(1/lamda[ii+1])));}
+        -:  279:}
+        -:  280:}}}
+        -:  281:
+        1:  282:  grvy_timer_end(__func__);
+        -:  283:
+        1:  284:}
+        -:  285:
+     4001:  286:void storewave()
+        -:  287:{
+     4001:  288: grvy_timer_begin(__func__);
+        -:  289:int i,j,k;
+     4001:  290:if(deb == 1)
+    #####:  291:   printf("Storng wavefields recorded\n");
+        -:  292:
+   804201:  293:for(i=rec[0];i<=rec[1];i++)  //storing velocities at receivers
+        -:  294:{
+  1600400:  295:for(j=rec[2];j<=rec[3];j++)
+        -:  296:{
+  1600400:  297:for(k=rec[4];k<=rec[5];k++)
+        -:  298:{
+   800200:  299:forward[count2] =  U3[mat(i,j,k)];
+   800200:  300:forward[count2+1] = V3[mat(i,j,k)];
+   800200:  301:forward[count2+2]= W3[mat(i,j,k)];
+   800200:  302:count2 = count2+3;
+        -:  303:}}}
+        -:  304:
+     4001:  305:  grvy_timer_end(__func__);
+     4001:  306:}
+        -:  307:
+        -:  308:
+        -:  309:

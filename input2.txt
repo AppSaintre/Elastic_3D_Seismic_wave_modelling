@@ -1,0 +1,54 @@
+#  -*-getpot-*-
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Example ASCII input file 
+# 
+# The input parser support a notion of sections which are defined by
+# the [section] syntax. You are allowed to have variables of the same
+# name so long as they are within unique section definitions.
+# 
+# $Id: pecos-input.txt 25123 2011-10-28 19:50:52Z karl $
+# ------------------------------------------------------------------------------
+
+#------------------------------------------
+# Example global input variable definitions
+#------------------------------------------
+
+x0		= -200                # grid location starting on x axis (all in m)
+x		= 200                  # grid location end on x axis
+yy0		= -5                 # grid location start on y axis 
+y		= 5                 # grid location end on y axis
+z0		= 0                 # grid location start on z axis
+z		= 400               # grid location end on z axis
+h		= 2                 # grid size (m)
+totaltime	= 0.6               #total simulation time(secs)
+delt		= 0.00015           # time step(secs)
+PML		= 40                # absorbing boundary width(m)
+fc		= 20                # freq of the ricker source(Hz)
+nol		= 2 		    # number of layers
+Du		= '1000 2000'                  # density gridfilefor each layer(Kg/m3)
+Vs		= '2500 2750'        # Vs grid file (Shear velocity m/s)
+Vp		= '3000 3000'        # Vp grid file (Compression wave velocity m/s)
+order           = 4                 # finite difference order in space (2/4)
+modev		= 0		#verification mode off = 0 on = 1	
+rec		= '22 221 24 24 4 4'       # receiver grid locations(starting x location,ending x location,starting y location,ending y,starting z,ending z)
+
+                                       # input grid location accorindg to formula ((xlocation-x0-Pml)/h)+2 , similrly for y and z;
+src		= '23 24 10'       # source locations (1 grid point x y and z coordinate)
+
+debug		= 0 # set to 0 to off debug mode 1 to on debug mode;
+#--------------------------------------------
+# Example submodel constants - note the two 
+# ways to define multiple constants.
+#--------------------------------------------
+
+#[turbulence]
+
+#model = "SA"                    # Spalart-Allmaras
+#A = '12.5 23.3 -1.25'           # Relevant model constants (into a vector)
+#c1 = 12.5 c2 = 23.2 c3 = -1.25  # Relevant model constants (3 separate constants)
+    
+
+
+
+

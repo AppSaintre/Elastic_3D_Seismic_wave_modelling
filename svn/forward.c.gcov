@@ -1,0 +1,84 @@
+        -:    0:Source:forward.c
+        -:    0:Graph:forward.gcno
+        -:    0:Data:forward.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include<stdio.h>
+        -:    2:#include<stdlib.h>
+        -:    3:#include<math.h>
+        -:    4:#include <string.h>
+        -:    5:#include<unistd.h>
+        -:    6:#include<grvy.h>
+        -:    7:#include<sys/time.h>
+        -:    8:#include<time.h>
+        -:    9:#include"omp.h"
+        -:   10:#include"globalvar.h"
+        -:   11:#include"damping3d.h"
+        -:   12:#include"routines.h"
+        -:   13:#include"write.h"
+        -:   14:
+        1:   15:int main(int argc, char **argv)
+        -:   16:{
+        -:   17:int count,i;
+        -:   18:double t,time1,time2;
+        1:   19:allocations();  //Dynamic allocatins of all variables
+        1:   20:grvy_timer_init("GRVY Example Timing");
+        1:   21:for(ml=1;ml<=1;ml++)  // loop for 6 shots
+        -:   22:{
+        1:   23:grvy_timer_reset();
+        1:   24:grvy_timer_begin("Main Program");
+        1:   25:time1 = omp_get_wtime();
+        1:   26:count2 = 0;
+        -:   27:count =0;
+     4002:   28:for(t=0;t<totaltime;t=t+delt)
+        -:   29:{
+     4001:   30:printf("%d Current time step is %lf\n",ml,t);
+     4001:   31:forcing(t);   // Enter forcing function 
+     4001:   32:stressupdate();  // update stresses
+     4001:   33:velocityupdate(); // update velocities
+     4001:   34:boundarycns();  // apply boundary conditions
+     4001:   35:storewave();// storing recorded signals
+        -:   36:count = count+1;
+        -:   37://printf("%3.50lf \n",U3[mat(23,24,4)]);
+        -:   38:}
+        1:   39:printf("code is good %d \n",count2);
+        1:   40:time2 = omp_get_wtime();
+        1:   41:printf("time is %3.50lf \n",time2-time1); //prints time take for one shot
+        1:   42:write_to_file(forward,count2); // writing to disk the stored velocities
+        1:   43:grvy_timer_end("Main Program");
+        1:   44:grvy_timer_finalize();
+        1:   45:grvy_timer_summarize();
+        -:   46:const int num_procs = 1;
+        -:   47:
+        1:   48:  grvy_timer_save_hist("C-Example1","My clever comment",num_procs,"hist.h5");
+    #####:   49:exit(1);
+        -:   50:}
+        -:   51:}
+        -:   52:
+        -:   53:
+        -:   54:
+        -:   55:
+        -:   56:
+        -:   57:
+        -:   58:
+        -:   59:
+        -:   60:
+        -:   61:
+        -:   62:
+        -:   63:
+        -:   64:
+        -:   65:
+        -:   66:
+        -:   67:
+        -:   68:
+        -:   69:
+        -:   70:
+        -:   71:
+        -:   72:
+        -:   73:
+        -:   74:
+        -:   75:
+        -:   76:
+        -:   77:
+        -:   78:
+        -:   79:

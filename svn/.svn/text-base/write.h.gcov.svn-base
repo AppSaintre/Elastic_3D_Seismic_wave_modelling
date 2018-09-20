@@ -1,0 +1,32 @@
+        -:    0:Source:write.h
+        -:    0:Graph:forward.gcno
+        -:    0:Data:forward.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include<stdio.h>
+        -:    2:#include<stdlib.h>
+        -:    3:#include<math.h>
+        -:    4:#include <string.h>
+        -:    5:
+        -:    6:#define array (Ny*Nz*i)+(Nz*j)+k
+        -:    7:#define mat(i,j,k) (Ny*Nz*i)+(Nz*j)+k
+        1:    8:void write_to_file(double *ptr, int size)
+        -:    9:{
+        1:   10:if(deb == 1) 
+    #####:   11:   printf("Writing wavefields recorded to disk\n");
+        1:   12: grvy_timer_begin(__func__);
+        -:   13:FILE *fp;
+        1:   14:fp=fopen("output","wb");if(!fp){printf("Can't open file \n");exit(1);}
+        1:   15:fwrite(ptr,sizeof(double),size,fp);
+        -:   16:
+        1:   17:  grvy_timer_end(__func__);
+        1:   18:}
+        -:   19:
+        -:   20:
+        -:   21:
+        -:   22: 
+        -:   23:
+        -:   24:
+        -:   25:
+        -:   26:
+        -:   27:
